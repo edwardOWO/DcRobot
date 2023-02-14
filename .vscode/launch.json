@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}",
+            "env": {},
+            "args": ["-t","MTA3NTA1MjkyODAwOTc4MTMwOA.GzMPCl.uyN44gds214b1c7UmcgYnJUP9bpI9TrRBC_7Gw"]
+        }
+    ]
+}
