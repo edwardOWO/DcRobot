@@ -46,11 +46,19 @@ func main() {
 		return
 	}
 
+	private, _ := dg.UserChannelCreate("508893735854145556")
+
+	fmt.Print(private.Name)
+
+	dg.ChannelMessageSend("1075065614051332116", "test")
+
 	// Register the messageCreate func as a callback for MessageCreate events.
 	dg.AddHandler(messageCreate)
 
 	// In this example, we only care about receiving message events.
 	dg.Identify.Intents = discordgo.IntentsGuildMessages
+
+	//*discordgo.Session.ChannelMessageSend()
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -75,10 +83,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	userID := "508893735854145556"
 
-	// example for specific user
+	// example for specific user to send 1 v 1 channels
 	if m.Author.ID == userID {
 		s.ChannelMessageSend(m.ChannelID, "Teemo 大人你好")
 	}
+
+	//s.ChannelMessageSend("1075065614051332116", "test")
 
 	// example for specific channaleID
 	if m.Content == "ping" && m.ChannelID == "1075065614051332116" {
@@ -94,12 +104,35 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if m.Content == "sendfile" {
+		Sendfile(s, m.ChannelID)
+		return
+	}
+
 	if m.Content == "issue" {
 
 		getStock(s, m)
 		return
 	}
+
+	if m.Content == "1v1" {
+		if channel, err := s.UserChannelCreate(m.Author.ID); err != nil {
+			fmt.Print(err.Error())
+		} else {
+			s.ChannelMessageSend(channel.ID, "1 v 1")
+			go loopSend(s, channel.ID)
+		}
+	}
 }
+func loopSend(s *discordgo.Session, channels string) {
+
+	for {
+		time.Sleep(time.Second * 5)
+		s.ChannelMessageSend(channels, "1 v 1")
+		Sendfile(s, channels)
+	}
+}
+
 func getStock(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	url := "https://openapi.twse.com.tw/v1/opendata/t187ap04_L"
@@ -129,4 +162,10 @@ func getStock(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	}
 
+}
+
+func Sendfile(s *discordgo.Session, channels string) {
+	verificationImage, _ := os.Open("./resource/BabyElephantWalk60.wav")
+	s.ChannelFileSendWithMessage(channels, "Send jpg example", "BabyElephantWalk60.wav", verificationImage)
+	//s.ChannelFileSendWithMessage(channels, "Send jpg example", "lisa.jpg", verificationImage)
 }

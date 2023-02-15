@@ -8,7 +8,7 @@
             "mode": "auto",
             "program": "${fileDirname}",
             "env": {},
-            "args": ["-t","MTA3NTA1MjkyODAwOTc4MTMwOA.GkLJ1B.LDj4V0gy0aji2HpOLeBSrKhyQSgKXkAyEzfsOo"]
+            "args": ["-t","test"]
         }
     ]
 }
