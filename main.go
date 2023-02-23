@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,17 +12,19 @@ import (
 	"syscall"
 	"time"
 
+	gpt3 "github.com/PullRequestInc/go-gpt3"
 	"github.com/bwmarrin/discordgo"
 )
 
 var (
-	Token string
+	DcToken      string
+	ChatGptToken string
 )
 
-//MTA3NTA1MjkyODAwOTc4MTMwOA.GkLJ1B.LDj4V0gy0aji2HpOLeBSrKhyQSgKXkAyEzfsOo
 func init() {
 
-	flag.StringVar(&Token, "t", "", "Bot Token")
+	flag.StringVar(&DcToken, "d", "", "Bot Token")
+	flag.StringVar(&ChatGptToken, "c", "", "Bot Token")
 	flag.Parse()
 }
 
@@ -40,7 +43,7 @@ type stock []struct {
 func main() {
 
 	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + DcToken)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -50,7 +53,7 @@ func main() {
 
 	fmt.Print(private.Name)
 
-	dg.ChannelMessageSend("1075065614051332116", "test")
+	// dg.ChannelMessageSend("1075065614051332116", "test")
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	dg.AddHandler(messageCreate)
@@ -81,12 +84,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	// This isn't required in this specific example but it's a good practice.
 
-	userID := "508893735854145556"
+	// userID := "508893735854145556"
 
 	// example for specific user to send 1 v 1 channels
-	if m.Author.ID == userID {
-		s.ChannelMessageSend(m.ChannelID, "Teemo 大人你好")
-	}
+
+	/*
+		if m.Author.ID == userID {
+			s.ChannelMessageSend(m.ChannelID, "Teemo 大人你好")
+		}
+	*/
 
 	//s.ChannelMessageSend("1075065614051332116", "test")
 
@@ -94,6 +100,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == "ping" && m.ChannelID == "1075065614051332116" {
 		s.ChannelMessageSend(m.ChannelID, "Pong!")
 		return
+	}
+
+	if len(m.Content) > 3 {
+		if m.Content[0:5] == "!gpt " {
+
+			question := m.Content[4:]
+
+			result := chatgpt(question)
+			s.ChannelMessageSend(m.ChannelID, result)
+			return
+		}
 	}
 
 	// list the channel "
@@ -168,4 +185,32 @@ func Sendfile(s *discordgo.Session, channels string) {
 	verificationImage, _ := os.Open("./resource/BabyElephantWalk60.wav")
 	s.ChannelFileSendWithMessage(channels, "Send jpg example", "BabyElephantWalk60.wav", verificationImage)
 	//s.ChannelFileSendWithMessage(channels, "Send jpg example", "lisa.jpg", verificationImage)
+}
+func chatgpt(question string) string {
+
+	fmt.Print("test")
+	ctx := context.Background()
+	//client := gpt3.NewClient("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")
+	client := gpt3.NewClient(ChatGptToken)
+
+	test := ""
+	test += "```\n"
+	err := client.CompletionStreamWithEngine(ctx, gpt3.TextDavinci003Engine, gpt3.CompletionRequest{
+		Prompt: []string{
+			question,
+		},
+		MaxTokens:   gpt3.IntPtr(4000),
+		Temperature: gpt3.Float32Ptr(0),
+	}, func(resp *gpt3.CompletionResponse) {
+		fmt.Print(resp.Choices[0].Text)
+		test += resp.Choices[0].Text
+
+	})
+	test += "```\n"
+	if err != nil {
+		return test
+	}
+
+	return test
+
 }
